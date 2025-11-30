@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon, Phone, Mail, MapPin, Facebook, Linkedin, Instagram, ArrowUp } from 'lucide-react';
 import AIChat from './AIChat';
+import VoiceAgent from './VoiceAgent';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -220,7 +221,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </footer>
 
-      {/* Integrated AI Assistant */}
+      {/* Agents */}
+      <VoiceAgent />
       <AIChat />
 
       {showScrollTop && (

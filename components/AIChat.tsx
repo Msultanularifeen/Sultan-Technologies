@@ -74,7 +74,19 @@ const AIChat: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // SAFEGUARD: Check if key exists before initializing
+      let apiKey;
+      try {
+        apiKey = process.env.API_KEY;
+      } catch (e) {
+        // process is undefined in some browser environments
+      }
+
+      if (!apiKey) {
+         throw new Error("API_KEY_MISSING");
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: userMsg.text,
@@ -92,11 +104,17 @@ const AIChat: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botResponse]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
+      let errorMsg = "My connection to the mainframe is currently unstable. Please contact human support.";
+      
+      if (error.message === 'API_KEY_MISSING') {
+        errorMsg = "System Alert: API Key configuration missing in deployment environment.";
+      }
+
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: "My connection to the mainframe is currently unstable (API Error). Please contact human support.",
+        text: errorMsg,
         sender: 'bot',
         timestamp: new Date()
       };
