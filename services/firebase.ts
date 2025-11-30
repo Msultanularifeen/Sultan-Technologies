@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp, deleteDoc, doc, orderBy } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Product, BlogPost, Message } from '../types';
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/firestore';
+import 'firebase/storage';
+import { Product, BlogPost, Message, FounderInfo } from '../types';
 
 // Exporting config so it can be used by AIChat and VoiceAgent
 // This avoids "process.env" crashes on static hosts like GitHub Pages
@@ -16,15 +16,23 @@ export const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app, db, auth, storage;
+let app;
+let db: firebase.firestore.Firestore | undefined;
+let auth: firebase.auth.Auth | undefined;
+let storage: firebase.storage.Storage | undefined;
 
 try {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  storage = getStorage(app);
+  // Check if apps are already initialized (hot reload safe)
+  if (!firebase.apps.length) {
+    app = firebase.initializeApp(firebaseConfig);
+  } else {
+    app = firebase.app();
+  }
+  db = firebase.firestore();
+  auth = firebase.auth();
+  storage = firebase.storage();
 } catch (e) {
-  console.warn("Firebase not configured. Using mock mode.");
+  console.warn("Firebase not configured. Using mock mode.", e);
 }
 
 // Export db for direct access (Admin Seeding)
@@ -36,8 +44,7 @@ export const api = {
     getAll: async () => {
       if (!db) return []; 
       try {
-        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
+        const snapshot = await db.collection('products').orderBy('createdAt', 'desc').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       } catch (e) {
         console.error("Error fetching products:", e);
@@ -46,24 +53,23 @@ export const api = {
     },
     add: async (product: Omit<Product, 'id'>) => {
       if (!db) throw new Error("Firebase not configured");
-      return addDoc(collection(db, 'products'), {
+      return db.collection('products').add({
         ...product,
         price: Number(product.price), // Ensure price is number
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        createdAt: firebase.firestore.Timestamp.now(),
+        updatedAt: firebase.firestore.Timestamp.now()
       });
     },
     delete: async (id: string) => {
       if (!db) return;
-      return deleteDoc(doc(db, 'products', id));
+      return db.collection('products').doc(id).delete();
     }
   },
   blog: {
     getAll: async () => {
       if (!db) return [];
       try {
-        const q = query(collection(db, 'blog_posts'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
+        const snapshot = await db.collection('blog_posts').orderBy('createdAt', 'desc').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
       } catch (e) {
         console.error("Error fetching blog:", e);
@@ -72,21 +78,20 @@ export const api = {
     },
     add: async (post: Omit<BlogPost, 'id'>) => {
       if (!db) throw new Error("Firebase not configured");
-      return addDoc(collection(db, 'blog_posts'), {
+      return db.collection('blog_posts').add({
         ...post,
-        createdAt: Timestamp.now()
+        createdAt: firebase.firestore.Timestamp.now()
       });
     },
     delete: async (id: string) => {
       if (!db) return;
-      return deleteDoc(doc(db, 'blog_posts', id));
+      return db.collection('blog_posts').doc(id).delete();
     }
   },
   messages: {
     getAll: async () => {
       if (!db) return [];
-      const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
+      const snapshot = await db.collection('messages').orderBy('createdAt', 'desc').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
     },
     send: async (msg: Omit<Message, 'id' | 'status' | 'date'>) => {
@@ -94,22 +99,41 @@ export const api = {
         console.log("Mock sending message:", msg);
         return;
       }
-      return addDoc(collection(db, 'messages'), {
+      return db.collection('messages').add({
         ...msg,
         status: 'new',
         date: new Date().toISOString(),
-        createdAt: Timestamp.now()
+        createdAt: firebase.firestore.Timestamp.now()
       });
+    }
+  },
+  settings: {
+    getFounderInfo: async (): Promise<FounderInfo | null> => {
+      if (!db) return null;
+      try {
+        const docSnap = await db.collection('settings').doc('founder').get();
+        if (docSnap.exists) {
+          return docSnap.data() as FounderInfo;
+        }
+        return null;
+      } catch (e) {
+        console.error("Error fetching settings:", e);
+        return null;
+      }
+    },
+    updateFounderInfo: async (info: FounderInfo) => {
+      if (!db) return;
+      return db.collection('settings').doc('founder').set(info, { merge: true });
     }
   },
   auth: {
     login: (email: string, pass: string) => {
       if (!auth) throw new Error("Firebase Auth not configured");
-      return signInWithEmailAndPassword(auth, email, pass);
+      return auth.signInWithEmailAndPassword(email, pass);
     },
     logout: () => {
       if (!auth) return;
-      return signOut(auth);
+      return auth.signOut();
     }
   }
 };

@@ -50,6 +50,10 @@ const Home: React.FC = () => {
     return () => observer.disconnect();
   }, [latestProducts]); // Re-observe when products load
 
+  const openWhatsAppProject = () => {
+    window.open("https://wa.me/923026082703?text=Hi,%20I%20want%20to%20initialize%20a%20new%20electronics%20project%20with%20Sultan%20Technologies.", "_blank");
+  };
+
   return (
     <div className="overflow-hidden bg-bg-primary">
       {/* 3D Hero Section */}
@@ -248,9 +252,12 @@ const Home: React.FC = () => {
          <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
             <h2 className="text-4xl md:text-6xl font-bold text-white mb-8">Be part of the revolution.</h2>
             <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">The technology of 2030 is available today. Start your transformation with Sultan Technologies.</p>
-            <Link to="/contact" className="inline-block px-12 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+            <button 
+              onClick={openWhatsAppProject} 
+              className="inline-block px-12 py-5 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+            >
                Initialize Project
-            </Link>
+            </button>
          </div>
       </section>
     </div>

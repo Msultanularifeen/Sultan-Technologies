@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award, Target, Heart, Zap, Rocket, Star } from 'lucide-react';
 import { FOUNDER_INFO } from '../services/mockData';
+import { api } from '../services/firebase';
+import { FounderInfo } from '../types';
 
 const About: React.FC = () => {
+  const [founder, setFounder] = useState<FounderInfo>(FOUNDER_INFO);
+
+  useEffect(() => {
+    const fetchFounder = async () => {
+      const data = await api.settings.getFounderInfo();
+      if (data) {
+        setFounder(data);
+      }
+    };
+    fetchFounder();
+  }, []);
+
   return (
     <div className="pt-24 pb-20 min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,8 +41,8 @@ const About: React.FC = () => {
                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 shadow-2xl group">
                       <div className="absolute inset-0 bg-brand-primary/20 opacity-0 group-hover:opacity-20 transition-opacity duration-500 z-10"></div>
                       <img 
-                        src={FOUNDER_INFO.image} 
-                        alt={FOUNDER_INFO.name} 
+                        src={founder.image} 
+                        alt={founder.name} 
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                         // Removed aggressive onError fallback to allow user's provided link to attempt loading
                       />
@@ -41,13 +55,13 @@ const About: React.FC = () => {
                 </div>
                 
                 <div className="md:col-span-7 space-y-8">
-                   <h2 className="text-4xl md:text-5xl font-bold text-white">{FOUNDER_INFO.name}</h2>
+                   <h2 className="text-4xl md:text-5xl font-bold text-white">{founder.name}</h2>
                    <div className="h-1 w-20 bg-brand-primary"></div>
                    <blockquote className="text-2xl text-gray-300 leading-relaxed font-light border-l-4 border-brand-primary pl-6">
-                      "{FOUNDER_INFO.quote}"
+                      "{founder.quote}"
                    </blockquote>
                    <p className="text-text-secondary text-lg leading-relaxed">
-                      {FOUNDER_INFO.bio}
+                      {founder.bio}
                    </p>
                    <div className="flex space-x-4 pt-4">
                       <div className="px-6 py-3 bg-white/5 rounded-full border border-white/10 flex items-center space-x-2">

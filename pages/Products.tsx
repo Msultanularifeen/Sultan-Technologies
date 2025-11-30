@@ -22,6 +22,17 @@ const Products: React.FC = () => {
     fetchProducts();
   }, []);
 
+  const handleGetQuote = (product: Product) => {
+    const message = `Hello Sultan Technologies, I am interested in getting a quote for:
+    
+Product: ${product.name}
+Price: PKR ${Number(product.price).toLocaleString()}
+    
+Please provide more details.`;
+    
+    window.open(`https://wa.me/923026082703?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   const filteredProducts = filter === 'all' 
     ? products 
     : products.filter(p => p.category === filter);
@@ -104,9 +115,12 @@ const Products: React.FC = () => {
                     <span className="text-xs text-text-muted font-normal mr-1">PKR</span>
                     {Number(product.price).toLocaleString()}
                   </div>
-                  <button className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center">
+                  <button 
+                    onClick={() => handleGetQuote(product)}
+                    className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center"
+                  >
                     <ShoppingCart size={16} className="mr-2" />
-                    Quote
+                    Quote on WhatsApp
                   </button>
                 </div>
               </div>

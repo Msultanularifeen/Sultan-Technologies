@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api, db } from '../services/firebase'; 
-import { PRODUCTS, BLOG_POSTS } from '../services/mockData';
-import { collection, writeBatch, doc } from 'firebase/firestore'; 
-import { Database, UploadCloud, CheckCircle, AlertTriangle, Trash2, Plus, X } from 'lucide-react';
-import { Product, BlogPost, Message } from '../types';
+import { PRODUCTS, BLOG_POSTS, FOUNDER_INFO } from '../services/mockData';
+import { Database, UploadCloud, CheckCircle, AlertTriangle, Trash2, Plus, X, User } from 'lucide-react';
+import { Product, BlogPost, Message, FounderInfo } from '../types';
 
 const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +15,7 @@ const Admin: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [founderInfo, setFounderInfo] = useState<FounderInfo>(FOUNDER_INFO);
   const [isLoading, setIsLoading] = useState(false);
 
   // Forms State
@@ -37,6 +37,10 @@ const Admin: React.FC = () => {
     setBlogPosts(b);
     const m = await api.messages.getAll();
     setMessages(m);
+    
+    const f = await api.settings.getFounderInfo();
+    if (f) setFounderInfo(f);
+    
     setIsLoading(false);
   };
 
@@ -55,7 +59,6 @@ const Admin: React.FC = () => {
       return;
     }
 
-    // Attempt Firebase Login as fallback, but fail if not matching above (unless real user exists in FB)
     try {
       await api.auth.login(email, password);
       setIsAuthenticated(true);
@@ -73,13 +76,13 @@ const Admin: React.FC = () => {
     }
     setSeedStatus('loading');
     try {
-      const batch = writeBatch(db);
+      const batch = db.batch();
       PRODUCTS.forEach((product) => {
-        const ref = doc(collection(db, 'products')); 
+        const ref = db!.collection('products').doc(); 
         batch.set(ref, { ...product, createdAt: new Date() });
       });
       BLOG_POSTS.forEach((post) => {
-        const ref = doc(collection(db, 'blog_posts'));
+        const ref = db!.collection('blog_posts').doc();
         batch.set(ref, { ...post, createdAt: new Date() });
       });
       await batch.commit();
@@ -94,7 +97,6 @@ const Admin: React.FC = () => {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Convert comma separated features string to array if needed (simplified for this input)
       await api.products.add(newProduct as Omit<Product, 'id'>);
       setShowProductForm(false);
       loadData();
@@ -129,6 +131,17 @@ const Admin: React.FC = () => {
      if (window.confirm("Delete this post?")) {
       await api.blog.delete(id);
       loadData();
+    }
+  };
+  
+  const handleUpdateFounder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.settings.updateFounderInfo(founderInfo);
+      alert("Profile Updated Successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Error updating profile");
     }
   };
 
@@ -199,6 +212,12 @@ const Admin: React.FC = () => {
                 className={`w-full text-left p-3 rounded transition-colors ${activeTab === 'messages' ? 'bg-brand-primary text-white' : 'text-text-secondary hover:bg-bg-hover'}`}
               >
                 Messages ({messages.length})
+              </button>
+              <button 
+                onClick={() => setActiveTab('founder')}
+                className={`w-full text-left p-3 rounded transition-colors flex items-center ${activeTab === 'founder' ? 'bg-brand-primary text-white' : 'text-text-secondary hover:bg-bg-hover'}`}
+              >
+                <User size={16} className="mr-2" /> Founder Profile
               </button>
                <button 
                 onClick={() => setActiveTab('database')}
@@ -351,6 +370,64 @@ const Admin: React.FC = () => {
               </div>
             )}
 
+            {/* FOUNDER TAB */}
+            {activeTab === 'founder' && (
+              <div>
+                <h2 className="text-xl font-bold mb-6">Founder Profile Settings</h2>
+                <form onSubmit={handleUpdateFounder} className="space-y-6 max-w-2xl">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Full Name</label>
+                    <input 
+                      className="w-full p-3 bg-bg-tertiary border border-border rounded-lg"
+                      value={founderInfo.name}
+                      onChange={e => setFounderInfo({...founderInfo, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Role/Title</label>
+                    <input 
+                      className="w-full p-3 bg-bg-tertiary border border-border rounded-lg"
+                      value={founderInfo.role}
+                      onChange={e => setFounderInfo({...founderInfo, role: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Short Bio</label>
+                    <textarea 
+                      className="w-full p-3 bg-bg-tertiary border border-border rounded-lg"
+                      rows={4}
+                      value={founderInfo.bio}
+                      onChange={e => setFounderInfo({...founderInfo, bio: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Quote</label>
+                    <textarea 
+                      className="w-full p-3 bg-bg-tertiary border border-border rounded-lg"
+                      rows={2}
+                      value={founderInfo.quote}
+                      onChange={e => setFounderInfo({...founderInfo, quote: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Image URL</label>
+                    <input 
+                      className="w-full p-3 bg-bg-tertiary border border-border rounded-lg"
+                      value={founderInfo.image}
+                      onChange={e => setFounderInfo({...founderInfo, image: e.target.value})}
+                    />
+                    <div className="mt-4 w-32 h-32 rounded-lg overflow-hidden border border-border">
+                      <img src={founderInfo.image} className="w-full h-full object-cover" alt="Preview"/>
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-primary px-8 py-3 rounded-lg font-bold">
+                    Save Profile Changes
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* DATABASE TAB */}
             {activeTab === 'database' && (
               <div>
                  <h2 className="text-xl font-bold mb-6">Database Utilities</h2>

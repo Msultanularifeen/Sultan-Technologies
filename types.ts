@@ -39,3 +39,11 @@ export interface Testimonial {
   content: string;
   rating: number;
 }
+
+export interface FounderInfo {
+  name: string;
+  role: string;
+  bio: string;
+  quote: string;
+  image: string;
+}

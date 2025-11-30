@@ -16,7 +16,22 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setStatus('submitting');
     try {
+      // 1. Save to Firebase Backup
       await api.messages.send(formData);
+      
+      // 2. Open WhatsApp with the data
+      const whatsappMsg = `*New Inquiry from Website*
+      
+Name: ${formData.name}
+Phone: ${formData.phone}
+Email: ${formData.email}
+Service: ${formData.service}
+
+Message:
+${formData.message}`;
+
+      window.open(`https://wa.me/923026082703?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', service: '', message: '' });
       setTimeout(() => setStatus('idle'), 5000);
@@ -171,7 +186,7 @@ const Contact: React.FC = () => {
 
               {status === 'success' && (
                 <div className="p-4 bg-green-900/20 border border-green-500/50 text-green-400 rounded-lg text-sm text-center">
-                  Message sent successfully! We will contact you soon.
+                  Message sent successfully! Redirecting to WhatsApp...
                 </div>
               )}
                {status === 'error' && (

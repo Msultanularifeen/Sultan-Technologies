@@ -16,6 +16,10 @@ const Services: React.FC = () => {
     return <Database size={40} />;
   };
 
+  const openWhatsApp = () => {
+    window.open("https://wa.me/923026082703?text=Hello%20Sultan%20Technologies,%20I%20need%20a%20custom%20engineering%20solution.", "_blank");
+  };
+
   return (
     <div className="pt-24 pb-20 min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,9 +55,9 @@ const Services: React.FC = () => {
         <div className="mt-20 bg-gradient-card rounded-2xl p-10 text-center border border-border/50">
           <h2 className="text-2xl font-bold mb-4">Need a Custom Solution?</h2>
           <p className="text-text-secondary mb-8">We can build exactly what you need. Let's discuss your requirements.</p>
-          <Link to="/contact" className="btn-primary px-8 py-3 rounded-lg font-bold">
-            Contact Engineering Team
-          </Link>
+          <button onClick={openWhatsApp} className="btn-primary px-8 py-3 rounded-lg font-bold">
+            Contact Engineering Team (WhatsApp)
+          </button>
         </div>
       </div>
     </div>
