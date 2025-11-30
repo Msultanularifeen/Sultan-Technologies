@@ -48,12 +48,21 @@ const Admin: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Strict credential check as requested
+    if (email === "msultanularifeenofficial@gmail.com" && password === "t9b5ey1") {
+      setIsAuthenticated(true);
+      return;
+    }
+
+    // Attempt Firebase Login as fallback, but fail if not matching above (unless real user exists in FB)
     try {
       await api.auth.login(email, password);
       setIsAuthenticated(true);
     } catch (err) {
-      console.warn("Auth failed or not configured, allowing access for demo");
-      setIsAuthenticated(true);
+      console.error("Login failed", err);
+      alert("Access Denied: Invalid credentials.");
+      setIsAuthenticated(false);
     }
   };
 
