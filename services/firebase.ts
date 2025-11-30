@@ -4,8 +4,9 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Product, BlogPost, Message } from '../types';
 
-// Replace with your actual Firebase configuration
-const firebaseConfig = {
+// Exporting config so it can be used by AIChat and VoiceAgent
+// This avoids "process.env" crashes on static hosts like GitHub Pages
+export const firebaseConfig = {
   apiKey: "AIzaSyCkTGcVYT5oloZCVLTkaod4mzVnfda6zGs",
   authDomain: "studio-753252263-bd2bc.firebaseapp.com",
   projectId: "studio-753252263-bd2bc",
@@ -15,8 +16,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-// Note: This will throw errors in the console if keys are invalid. 
-// For the purpose of this demo, we will wrap it to avoid crashing the UI if keys are missing.
 let app, db, auth, storage;
 
 try {
@@ -31,7 +30,7 @@ try {
 // Export db for direct access (Admin Seeding)
 export { db };
 
-// Data Providers (Switch between Firebase and Mock based on config availability)
+// Data Providers
 export const api = {
   products: {
     getAll: async () => {

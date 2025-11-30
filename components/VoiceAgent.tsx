@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, X, Activity, Volume2 } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
+import { firebaseConfig } from '../services/firebase';
 
 // Audio Context configuration
 const AUDIO_SAMPLE_RATE = 24000;
@@ -19,13 +20,9 @@ const VoiceAgent: React.FC = () => {
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
-  // Helper to safely get API Key
+  // Helper to safely get API Key without process.env crash
   const getApiKey = () => {
-    try {
-      return process.env.API_KEY;
-    } catch (e) {
-      return undefined;
-    }
+    return firebaseConfig.apiKey;
   };
 
   const connectToGemini = async () => {

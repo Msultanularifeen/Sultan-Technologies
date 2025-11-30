@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Cpu } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { PRODUCTS, SERVICES, FOUNDER_INFO } from '../services/mockData';
+import { firebaseConfig } from '../services/firebase';
 
 interface Message {
   id: string;
@@ -74,13 +75,9 @@ const AIChat: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // SAFEGUARD: Check if key exists before initializing
-      let apiKey;
-      try {
-        apiKey = process.env.API_KEY;
-      } catch (e) {
-        // process is undefined in some browser environments
-      }
+      // Use the key from firebaseConfig directly.
+      // This prevents "ReferenceError: process is not defined" on GitHub Pages.
+      const apiKey = firebaseConfig.apiKey;
 
       if (!apiKey) {
          throw new Error("API_KEY_MISSING");
