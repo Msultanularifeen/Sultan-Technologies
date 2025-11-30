@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Product, BlogPost, Message } from '../types';
@@ -35,28 +35,60 @@ export const api = {
   products: {
     getAll: async () => {
       if (!db) return []; 
-      const q = query(collection(db, 'products'), where('status', '==', 'published'));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      try {
+        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      } catch (e) {
+        console.error("Error fetching products:", e);
+        return [];
+      }
     },
     add: async (product: Omit<Product, 'id'>) => {
       if (!db) throw new Error("Firebase not configured");
       return addDoc(collection(db, 'products'), {
         ...product,
+        price: Number(product.price), // Ensure price is number
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       });
+    },
+    delete: async (id: string) => {
+      if (!db) return;
+      return deleteDoc(doc(db, 'products', id));
     }
   },
   blog: {
     getAll: async () => {
       if (!db) return [];
-      const q = query(collection(db, 'blog_posts'), where('status', '==', 'published'));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+      try {
+        const q = query(collection(db, 'blog_posts'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+      } catch (e) {
+        console.error("Error fetching blog:", e);
+        return [];
+      }
+    },
+    add: async (post: Omit<BlogPost, 'id'>) => {
+      if (!db) throw new Error("Firebase not configured");
+      return addDoc(collection(db, 'blog_posts'), {
+        ...post,
+        createdAt: Timestamp.now()
+      });
+    },
+    delete: async (id: string) => {
+      if (!db) return;
+      return deleteDoc(doc(db, 'blog_posts', id));
     }
   },
   messages: {
+    getAll: async () => {
+      if (!db) return [];
+      const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+    },
     send: async (msg: Omit<Message, 'id' | 'status' | 'date'>) => {
       if (!db) {
         console.log("Mock sending message:", msg);

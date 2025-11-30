@@ -1,13 +1,30 @@
-import React, { useState } from 'react';
-import { PRODUCTS } from '../services/mockData';
-import { Filter, ShoppingCart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/firebase';
+import { Product } from '../types';
+import { Filter, ShoppingCart, Loader } from 'lucide-react';
 
 const Products: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await api.products.getAll();
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to load products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const filteredProducts = filter === 'all' 
-    ? PRODUCTS 
-    : PRODUCTS.filter(p => p.category === filter);
+    ? products 
+    : products.filter(p => p.category === filter);
 
   const categories = [
     { id: 'all', label: 'All Products' },
@@ -15,6 +32,14 @@ const Products: React.FC = () => {
     { id: 'automation', label: 'Automation' },
     { id: 'custom', label: 'Custom Solutions' }
   ];
+
+  if (loading) {
+    return (
+      <div className="pt-24 min-h-screen flex items-center justify-center bg-bg-primary">
+         <Loader className="animate-spin text-brand-primary" size={48} />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-bg-primary">
@@ -66,7 +91,7 @@ const Products: React.FC = () => {
                 <p className="text-text-muted text-sm mb-4 line-clamp-3">{product.description}</p>
                 
                 <ul className="text-xs text-text-secondary space-y-1 mb-6 flex-grow">
-                  {product.features.slice(0, 3).map((feature, i) => (
+                  {product.features?.slice(0, 3).map((feature, i) => (
                     <li key={i} className="flex items-center">
                       <span className="w-1.5 h-1.5 bg-brand-accent rounded-full mr-2"></span>
                       {feature}
@@ -77,7 +102,7 @@ const Products: React.FC = () => {
                 <div className="flex justify-between items-center pt-4 border-t border-border">
                   <div className="text-lg font-bold text-text-primary">
                     <span className="text-xs text-text-muted font-normal mr-1">PKR</span>
-                    {product.price.toLocaleString()}
+                    {Number(product.price).toLocaleString()}
                   </div>
                   <button className="btn-primary px-4 py-2 rounded-lg text-sm flex items-center">
                     <ShoppingCart size={16} className="mr-2" />
@@ -91,7 +116,7 @@ const Products: React.FC = () => {
         
         {filteredProducts.length === 0 && (
             <div className="text-center py-20 text-text-muted">
-                No products found in this category.
+                No products found. Please contact us or check back later.
             </div>
         )}
       </div>

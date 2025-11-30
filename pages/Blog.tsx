@@ -1,8 +1,34 @@
-import React from 'react';
-import { BLOG_POSTS } from '../services/mockData';
-import { Calendar, Tag, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/firebase';
+import { BlogPost } from '../types';
+import { Calendar, Tag, ArrowRight, Loader } from 'lucide-react';
 
 const Blog: React.FC = () => {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        const data = await api.blog.getAll();
+        setPosts(data);
+      } catch (error) {
+        console.error("Failed to load blog", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlog();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="pt-24 min-h-screen flex items-center justify-center bg-bg-primary">
+         <Loader className="animate-spin text-brand-primary" size={48} />
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 pb-20 min-h-screen bg-bg-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +40,7 @@ const Blog: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 animate-fade-in animation-delay-200">
-          {BLOG_POSTS.map((post) => (
+          {posts.map((post) => (
             <article key={post.id} className="flex flex-col bg-bg-secondary rounded-xl overflow-hidden border border-border hover-card-effect h-full">
               <div className="h-48 overflow-hidden">
                 <img 
@@ -41,6 +67,12 @@ const Blog: React.FC = () => {
             </article>
           ))}
         </div>
+        
+        {posts.length === 0 && (
+          <div className="text-center py-20 text-text-muted">
+            No blog posts published yet.
+          </div>
+        )}
       </div>
     </div>
   );

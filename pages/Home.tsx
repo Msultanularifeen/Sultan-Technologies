@@ -1,11 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Cpu, Wifi, Settings, ShoppingBag, Zap, Shield, ChevronRight, Globe, Activity } from 'lucide-react';
-import { PRODUCTS, TESTIMONIALS } from '../services/mockData';
+import { api } from '../services/firebase'; // Use api instead of mock
+import { Product } from '../types';
+import { TESTIMONIALS } from '../services/mockData';
 
 const Home: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLDivElement>(null);
+  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    // Fetch latest products for the homepage
+    const fetchLatest = async () => {
+      const all = await api.products.getAll();
+      setLatestProducts(all.slice(0, 3));
+    };
+    fetchLatest();
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -36,7 +48,7 @@ const Home: React.FC = () => {
 
     document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [latestProducts]); // Re-observe when products load
 
   return (
     <div className="overflow-hidden bg-bg-primary">
@@ -157,7 +169,7 @@ const Home: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {PRODUCTS.slice(0, 3).map((product, idx) => (
+               {latestProducts.map((product, idx) => (
                   <Link to="/products" key={product.id} className={`group block relative rounded-3xl bg-[#0a0a0a] border border-white/5 hover:border-brand-primary/30 transition-all duration-500 hover:-translate-y-2 reveal-on-scroll opacity-0 translate-y-10`} style={{ transitionDelay: `${idx * 100}ms` }}>
                      <div className="aspect-[4/3] overflow-hidden rounded-t-3xl bg-[#111] relative">
                         <div className="absolute inset-0 bg-brand-primary/10 opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
@@ -166,12 +178,17 @@ const Home: React.FC = () => {
                      <div className="p-6">
                         <div className="flex justify-between items-start mb-2">
                            <h3 className="font-bold text-lg text-white group-hover:text-brand-primary transition-colors">{product.name}</h3>
-                           <span className="text-brand-primary text-sm font-bold font-mono bg-brand-primary/10 px-3 py-1 rounded-full">PKR {product.price.toLocaleString()}</span>
+                           <span className="text-brand-primary text-sm font-bold font-mono bg-brand-primary/10 px-3 py-1 rounded-full">PKR {Number(product.price).toLocaleString()}</span>
                         </div>
                         <p className="text-sm text-text-secondary line-clamp-2">{product.description}</p>
                      </div>
                   </Link>
                ))}
+               {latestProducts.length === 0 && (
+                 <div className="col-span-3 text-center text-text-muted py-12">
+                   Initializing Product Database...
+                 </div>
+               )}
             </div>
          </div>
       </section>
